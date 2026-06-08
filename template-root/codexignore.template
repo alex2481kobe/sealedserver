@@ -1,0 +1,30 @@
+# Dependencies and build-tool output
+.DS_Store
+node_modules/
+dist/
+build/
+coverage/
+.cache/
+.turbo/
+.vite/
+tmp/
+temp/
+*.log
+*.tsbuildinfo
+
+# Environment files and secrets
+.env
+.env.*
+secrets/
+.secrets/
+private/
+credentials/
+
+# Runtime data
+*.sqlite
+*.sqlite3
+*.db
+*.db-shm
+*.db-wal
+backups/
+logs/

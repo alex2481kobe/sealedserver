@@ -1,0 +1,6 @@
+# Example cron file.
+#
+# Copy to /etc/cron.d/example and replace app paths/user.
+# Format: minute hour day month weekday user command
+
+*/15 * * * * example cd /var/www/example && /usr/bin/php scripts/migrate.php >/var/log/example/cron.log 2>&1

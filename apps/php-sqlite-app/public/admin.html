@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>App Admin</title>
+  <style>
+    body {
+      color: #15171a;
+      font: 14px/1.45 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      margin: 0;
+      background: #f6f7f8;
+    }
+    main {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 32px 20px;
+    }
+    h1 {
+      font-size: 24px;
+      margin: 0 0 20px;
+    }
+    .toolbar {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+    input, button {
+      border: 1px solid #c9cdd2;
+      border-radius: 6px;
+      font: inherit;
+      padding: 8px 10px;
+    }
+    input {
+      flex: 1;
+      min-width: 180px;
+    }
+    button {
+      background: #15171a;
+      color: white;
+      cursor: pointer;
+    }
+    .grid {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      margin-bottom: 20px;
+    }
+    .card {
+      background: white;
+      border: 1px solid #dde1e5;
+      border-radius: 8px;
+      padding: 14px;
+    }
+    .value {
+      font-size: 24px;
+      font-weight: 700;
+    }
+    pre {
+      background: #101214;
+      border-radius: 8px;
+      color: #eef1f3;
+      overflow: auto;
+      padding: 14px;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>App Admin</h1>
+    <div class="toolbar">
+      <input id="token" type="password" placeholder="Admin token" autocomplete="off">
+      <button id="load">Load</button>
+    </div>
+    <section id="summary" class="grid"></section>
+    <pre id="recent">No data loaded.</pre>
+  </main>
+  <script>
+    const token = document.querySelector("#token");
+    const summary = document.querySelector("#summary");
+    const recent = document.querySelector("#recent");
+
+    async function fetchAdmin(path) {
+      const res = await fetch(path, { headers: { "X-Admin-Token": token.value } });
+      if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+      return res.json();
+    }
+
+    document.querySelector("#load").addEventListener("click", async () => {
+      try {
+        const data = await fetchAdmin("/api/admin/summary");
+        const rows = Object.entries(data).map(([key, value]) => `
+          <article class="card">
+            <div>${key}</div>
+            <div class="value">${value}</div>
+          </article>
+        `);
+        summary.innerHTML = rows.join("");
+        recent.textContent = JSON.stringify(await fetchAdmin("/api/admin/recent"), null, 2);
+      } catch (err) {
+        recent.textContent = err instanceof Error ? err.message : String(err);
+      }
+    });
+  </script>
+</body>
+</html>

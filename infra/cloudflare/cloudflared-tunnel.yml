@@ -1,0 +1,13 @@
+# Example cloudflared tunnel config.
+#
+# Replace tunnel id, credentials path, and service ports.
+
+tunnel: example-tunnel-id
+credentials-file: /etc/cloudflared/example-tunnel-id.json
+
+ingress:
+  - hostname: example.com
+    service: http://127.0.0.1:8081
+  - hostname: api.example.com
+    service: http://127.0.0.1:8090
+  - service: http_status:404

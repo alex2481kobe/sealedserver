@@ -1,0 +1,22 @@
+# Example systemd unit for a Go service.
+#
+# Copy to /etc/systemd/system/example.service and replace names/paths.
+
+[Unit]
+Description=Example Go Service
+After=network.target
+
+[Service]
+User=example
+Group=example
+WorkingDirectory=/var/www/example
+EnvironmentFile=/etc/example/example.env
+ExecStart=/var/www/example/example-server
+Restart=on-failure
+RestartSec=5
+LimitNOFILE=65536
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

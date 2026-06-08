@@ -1,0 +1,20 @@
+{
+  "name": "example",
+  "lane": "php-sqlite-app",
+  "domains": ["example.com"],
+  "linux_user": "example",
+  "www_root": "/var/www/example",
+  "data_root": "/var/lib/example",
+  "env_file": "/etc/example/example.env",
+  "logs_root": "/var/log/example",
+  "nginx_site": "/etc/nginx/sites-available/example.conf",
+  "systemd_units": ["litestream-example.service"],
+  "database": {
+    "type": "sqlite",
+    "path": "/var/lib/example/example.sqlite"
+  },
+  "backups": {
+    "sqlite": "litestream",
+    "target": "cloudflare-r2"
+  }
+}

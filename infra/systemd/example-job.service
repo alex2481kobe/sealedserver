@@ -1,0 +1,16 @@
+# Example one-shot scheduled job service.
+#
+# Pair with example-job.timer.
+
+[Unit]
+Description=Example Scheduled Job
+
+[Service]
+Type=oneshot
+User=example
+Group=example
+WorkingDirectory=/var/www/example
+EnvironmentFile=/etc/example/example.env
+ExecStart=/usr/bin/php /var/www/example/scripts/migrate.php
+NoNewPrivileges=true
+PrivateTmp=true

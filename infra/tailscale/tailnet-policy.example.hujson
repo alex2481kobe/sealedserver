@@ -1,0 +1,40 @@
+{
+  // Example production server policy. Replace users/groups before applying.
+  "tagOwners": {
+    "tag:server": ["autogroup:admin"],
+    "tag:prod": ["autogroup:admin"],
+    "tag:dev": ["autogroup:admin"]
+  },
+
+  "acls": [
+    {
+      "action": "accept",
+      "src": ["autogroup:admin"],
+      "dst": ["tag:server:22", "tag:prod:22", "tag:dev:22"]
+    }
+  ],
+
+  "ssh": [
+    {
+      "action": "check",
+      "src": ["autogroup:admin"],
+      "dst": ["tag:server", "tag:prod"],
+      "users": ["deploy"],
+      "checkPeriod": "always"
+    },
+    {
+      "action": "check",
+      "src": ["autogroup:admin"],
+      "dst": ["tag:dev"],
+      "users": ["deploy"],
+      "checkPeriod": "1h"
+    }
+  ],
+
+  "tests": [
+    {
+      "src": "autogroup:admin",
+      "accept": ["tag:server:22", "tag:prod:22", "tag:dev:22"]
+    }
+  ]
+}

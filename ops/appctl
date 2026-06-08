@@ -1,0 +1,68 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+APP="${APP:-}"
+SERVICE="${SERVICE:-$APP}"
+WWW_ROOT="${WWW_ROOT:-/var/www/$APP}"
+LOG_ROOT="${LOG_ROOT:-/var/log/$APP}"
+ENV_FILE="${ENV_FILE:-/etc/$APP/$APP.env}"
+cmd="${1:-help}"
+
+if [[ "$cmd" != "help" && -z "$APP" ]]; then
+  echo "Set APP, e.g. APP=example SERVICE=example ./ops/appctl status" >&2
+  exit 2
+fi
+
+case "$cmd" in
+  status)
+    sudo systemctl status "$SERVICE" --no-pager
+    ;;
+  logs)
+    sudo journalctl -u "$SERVICE" -n "${LINES:-120}" --no-pager
+    ;;
+  follow)
+    sudo journalctl -u "$SERVICE" -f
+    ;;
+  restart)
+    sudo systemctl restart "$SERVICE"
+    sudo systemctl status "$SERVICE" --no-pager
+    ;;
+  reload-nginx)
+    sudo nginx -t
+    sudo systemctl reload nginx
+    ;;
+  nginx-logs)
+    sudo tail -n "${LINES:-120}" /var/log/nginx/error.log
+    ;;
+  app-logs)
+    sudo find "$LOG_ROOT" -maxdepth 1 -type f -name '*.log' -print -exec tail -n "${LINES:-80}" {} \;
+    ;;
+  shell)
+    sudo -u "$APP" -H /bin/bash -lc "cd '$WWW_ROOT' && exec /bin/bash"
+    ;;
+  env-path)
+    echo "$ENV_FILE"
+    ;;
+  health)
+    curl -fsS "${HEALTH_URL:-http://127.0.0.1:8081/api/healthz}"
+    echo
+    ;;
+  help|*)
+    cat <<'EOF'
+Usage:
+  APP=<app> SERVICE=<service> ./ops/appctl <command>
+
+Commands:
+  status        systemd status for SERVICE
+  logs          recent journal logs for SERVICE
+  follow        follow journal logs for SERVICE
+  restart       restart SERVICE and print status
+  reload-nginx  nginx -t and reload
+  nginx-logs    recent nginx error logs
+  app-logs      tail /var/log/<app>/*.log
+  shell         private SSH/Tailscale app shell as APP user
+  env-path      print expected env file path
+  health        curl HEALTH_URL or default local health URL
+EOF
+    ;;
+esac

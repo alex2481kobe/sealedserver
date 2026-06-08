@@ -1,0 +1,19 @@
+# Example Litestream systemd unit.
+#
+# Copy to /etc/systemd/system/litestream-example.service and replace paths.
+
+[Unit]
+Description=Litestream SQLite Replication For Example
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=example
+Group=example
+EnvironmentFile=/etc/example/example.env
+ExecStart=/usr/local/bin/litestream replicate -config /etc/example/litestream.yml
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

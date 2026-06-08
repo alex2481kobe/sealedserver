@@ -1,0 +1,9 @@
+# Example sudoers rule for an ops/deploy user.
+#
+# Prefer normal sudo for your own admin account first. Use narrow NOPASSWD
+# rules only after you know which commands your deployment flow needs.
+#
+# Copy to /etc/sudoers.d/deploy-ops with visudo:
+# sudo visudo -f /etc/sudoers.d/deploy-ops
+
+deploy ALL=(root) NOPASSWD: /bin/systemctl status *, /bin/journalctl -u *, /usr/sbin/nginx -t, /bin/systemctl reload nginx

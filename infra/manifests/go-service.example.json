@@ -1,0 +1,20 @@
+{
+  "name": "example-game",
+  "lane": "go-service",
+  "domains": ["api.example.com"],
+  "linux_user": "examplegame",
+  "www_root": "/var/www/example-game",
+  "data_root": "/var/lib/example-game",
+  "env_file": "/etc/example-game/example-game.env",
+  "logs_root": "/var/log/example-game",
+  "nginx_site": "/etc/nginx/sites-available/example-game.conf",
+  "systemd_units": ["example-game.service"],
+  "database": {
+    "type": "sqlite",
+    "path": "/var/lib/example-game/example-game.sqlite"
+  },
+  "backups": {
+    "sqlite": "litestream",
+    "target": "cloudflare-r2"
+  }
+}

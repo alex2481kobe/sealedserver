@@ -1,0 +1,12 @@
+# Example Litestream config.
+#
+# Replace app names, DB path, and bucket target.
+
+dbs:
+  - path: /var/lib/example/example.sqlite
+    replicas:
+      - type: s3
+        bucket: example-sqlite-backups
+        path: example
+        endpoint: https://<account-id>.r2.cloudflarestorage.com
+        region: auto

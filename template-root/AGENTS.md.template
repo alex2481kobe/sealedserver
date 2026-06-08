@@ -1,0 +1,53 @@
+# AGENTS
+
+Local-only workspace guide. This file is ignored by git in real projects.
+
+## Workspace Shape
+
+- Treat this folder as the product/server repo root.
+- Keep local-only docs, strategy, scratch work, assistant files, and archives in the repo folder but ignored by `.gitignore`.
+- Put real app/source code under `apps/`, `packages/`, `systems/`, `infra/`, and tracked public docs as needed.
+- Public-facing documentation belongs in `documentation/`; internal affairs, planning, scratch work, and private ops notes belong in ignored `docs/`.
+- Avoid child repos unless a package truly needs its own public release boundary.
+
+## Public / Private Boundary
+
+Repo-facing tracked files describe the product as it exists for an outside reader.
+
+Do not put this in tracked files:
+
+- internal roadmap/status/planning chatter;
+- current task notes or agent handoffs;
+- local `docs/`, `throwaway/`, or absolute local paths;
+- personal names, private project names, usernames, emails, or machine-specific paths;
+- monetization debate, licensing deliberation, or internal business strategy;
+- implementation assignments or coordination notes.
+
+Tracked docs should only contain durable setup, commands, architecture, APIs, contribution rules, security notes, and accepted license behavior.
+
+## Command Shape
+
+- Prefer direct executable calls: `rg`, `grep`, `find`, `cat`, `git`, and test commands.
+- Do not wrap simple commands in `/bin/zsh -lc`, `bash -lc`, `sh -c`, or similar unless shell behavior is actually needed.
+- For searches, use `rg` with quoted patterns and explicit paths.
+
+## File And Cleanup Rules
+
+- Aim for roughly 200 lines per source file.
+- Around 250 lines, split if practical.
+- Anything over 300 lines needs a clear reason or a follow-up split plan.
+- Do not delete hand-authored files/folders as cleanup. Move obsolete work into `throwaway/` with enough path/date context to recover it.
+
+## Git Rules
+
+- Stage and commit only explicit paths.
+- Never use sweep staging such as `git add -A`, `git add .`, or `git commit -a`.
+- Do not revert, reset, clean, or overwrite another agent/user's work without explicit approval.
+
+## Dependency And Security Rules
+
+- Do not add dependencies speculatively.
+- Commit manifests and lockfiles together.
+- Keep secrets, local databases, logs, generated artifacts, provider keys, and credentials out of git.
+- Bind local services privately by default.
+- Do not expose dashboards, shell controls, filesystem access, or agent orchestration publicly by default.
