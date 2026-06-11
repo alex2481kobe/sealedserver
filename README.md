@@ -2,7 +2,8 @@
 
 A practical Ubuntu VPS template for small production apps: static sites, PHP +
 SQLite backends, Go services, nginx, Cloudflare Tunnel, Tailscale, systemd,
-Litestream backups, and per-app isolation.
+Litestream backups, per-app isolation, and safe open-source contribution
+defaults.
 
 This repo is meant to be copied, trimmed, and adapted. It gives you a clear
 server shape without forcing Docker, Kubernetes, Redis, Postgres, or a managed
@@ -19,6 +20,7 @@ platform before the app actually needs them.
 - Per-app Linux user, folder, env, logs, and database conventions.
 - Small ops helpers for private SSH-only status, logs, and app shells.
 - Public/private workspace templates for keeping local notes and secrets out of git.
+- Contributor, security, and read-only CI defaults for open source.
 
 ## Default Stack
 
@@ -146,6 +148,20 @@ sh -n scripts/create-app-folders.sh
 sh -n scripts/lock-no-inbound-firewall.sh
 sh -n scripts/verify-no-inbound.sh
 ```
+
+## Open Source Safety
+
+This repository is configured for a solo-owner open-source workflow:
+
+- outside pull requests are reviewed before privileged work runs;
+- CI uses read-only repository permissions and no secrets;
+- dependency changes are reviewed manually instead of being auto-opened or
+  auto-merged by bots;
+- the owner can still push or merge their own work while the project has one
+  maintainer.
+
+See `CONTRIBUTING.md`, `SECURITY.md`, and `.github/` for the public policy and
+workflow defaults.
 
 ## Security Notes
 
