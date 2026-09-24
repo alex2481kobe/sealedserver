@@ -9,7 +9,7 @@ by Litestream. A backup counts once a restore from it has worked.
 | --- | --- |
 | SQLite databases in `/var/lib/<app>` | Litestream to R2 |
 | Env files | Values kept in a password manager |
-| nginx, systemd, PHP-FPM and cloudflared config | Rebuilt from this repo |
+| nginx, systemd and cloudflared config | Rebuilt from this repo |
 | Tunnel credentials | Recreated with `cloudflared tunnel create` |
 
 ## Install Litestream
@@ -62,7 +62,7 @@ which is why the old one is removed first.
 ```sh
 APP=example
 DB=/var/lib/$APP/$APP.sqlite
-sudo systemctl stop $APP litestream-$APP          # for PHP apps: stop php8.3-fpm instead of $APP
+sudo systemctl stop $APP litestream-$APP
 sudo mv "$DB" "$DB.broken.$(date +%Y%m%d%H%M%S)"
 sudo rm -f "$DB-wal" "$DB-shm"
 sudo -u $APP litestream restore -config /etc/$APP/litestream.yml "$DB"

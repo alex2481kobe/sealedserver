@@ -73,7 +73,8 @@ done
 
 section "App folders"
 # Apps: folders under /var/www and /opt, plus the users custom units run as.
-apps=$( (ls /var/www 2>/dev/null; ls /opt 2>/dev/null; sed -n 's/^User=//p' /etc/systemd/system/*.service 2>/dev/null) \
+# Only real unit files; symlinks there are aliases of system services.
+apps=$( (ls /var/www 2>/dev/null; ls /opt 2>/dev/null; find /etc/systemd/system -maxdepth 1 -type f -name '*.service' -exec sed -n 's/^User=//p' {} + 2>/dev/null) \
   | grep -vxE 'html|containerd|root' | sort -u)
 for app in ${apps}; do
   echo "${app}:"
@@ -122,13 +123,6 @@ for unit in /etc/systemd/system/*.service; do
   sed -E 's/^(Environment=).*/\1<masked>/' "${unit}" | grep -vE '^[[:space:]]*(#|$)' | mask
 done
 
-section "PHP-FPM pools"
-for pool in /etc/php/*/fpm/pool.d/*.conf; do
-  [[ -f "${pool}" ]] || continue
-  echo "--- ${pool}"
-  grep -vE '^[[:space:]]*(;|$)' "${pool}" | sed -E 's/^(env\[[^]]*\][[:space:]]*=).*/\1 <masked>/' | mask
-done
-
 section "Cloudflare Tunnel"
 systemctl cat cloudflared 2>/dev/null | grep -E '^ExecStart=' | mask
 for config in /etc/cloudflared/config.yml /root/.cloudflared/config.yml /home/*/.cloudflared/config.yml; do
@@ -170,6 +164,19 @@ echo "Pending updates: $(apt list --upgradable 2>/dev/null | tail -n +2 | wc -l)
 echo "Journal size: $(journalctl --disk-usage 2>/dev/null | grep -oE '[0-9.]+[KMGT]')"
 echo "/var/log size: $(du -sh /var/log 2>/dev/null | cut -f1)"
 echo "Failed SSH logins, last 24h: $(journalctl -u ssh --since -24h --no-pager 2>/dev/null | grep -c 'Failed')"
+echo
+echo "Service memory (MB, current / peak since the service started):"
+units=$( (printf '%s\n' nginx cloudflared tailscaled; find /etc/systemd/system -maxdepth 1 -type f -name '*.service' -printf '%f\n' | sed 's/\.service$//') | sort -u)
+for unit in ${units}; do
+  [[ "$(systemctl is-active "${unit}" 2>/dev/null)" == "active" ]] || continue
+  systemctl show "${unit}" -p MemoryCurrent -p MemoryPeak -p ActiveEnterTimestamp 2>/dev/null | awk -v u="${unit}" '
+    { v[substr($0, 1, index($0, "=") - 1)] = substr($0, index($0, "=") + 1) }
+    END {
+      c = (v["MemoryCurrent"] ~ /^[0-9]+$/) ? sprintf("%.1f", v["MemoryCurrent"] / 1048576) : "?"
+      p = (v["MemoryPeak"] ~ /^[0-9]+$/) ? sprintf("%.1f", v["MemoryPeak"] / 1048576) : "?"
+      printf "  %-34s %8s / %-8s since %s\n", u, c, p, v["ActiveEnterTimestamp"]
+    }'
+done
 echo
 echo "Top processes by memory:"
 ps -eo user,%cpu,%mem,rss,comm --sort=-rss | head -11

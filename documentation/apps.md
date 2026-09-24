@@ -6,7 +6,6 @@ Replace `example` with the app name everywhere below.
 | Path | Owner | Holds |
 | --- | --- | --- |
 | `/var/www/example/public` | `example` | Files nginx serves |
-| `/var/www/example/src`, `db` | `example` | PHP code and schema |
 | `/opt/example/example-server` | `root` | Go binary |
 | `/var/lib/example` | `example` | SQLite database and other data |
 | `/etc/example/example.env` | `root:example`, mode 640 | Settings and secrets |
@@ -25,7 +24,7 @@ Replace `example` with the app name everywhere below.
 On the server, from the repo clone:
 
 ```sh
-sudo bash scripts/create-app-folders.sh example static   # or php, or go
+sudo bash scripts/create-app-folders.sh example static   # or go
 sudo systemctl restart nginx
 ```
 
@@ -53,37 +52,6 @@ ssh -t deploy@<server-name> 'sudo rsync -a --delete /tmp/example-public/ /var/ww
 Files under `/assets/` are cached for a year, so a changed asset needs a new
 file name or `?v=` value. Everything else is cached for five minutes.
 
-## PHP + SQLite app
-
-```sh
-sudo apt install -y php8.3-fpm php8.3-sqlite3
-sudo cp infra/php-fpm/example.conf /etc/php/8.3/fpm/pool.d/example.conf
-sudo systemctl reload php8.3-fpm
-sudo cp infra/nginx/php-sqlite-app.conf /etc/nginx/sites-available/example.conf
-sudo ln -s /etc/nginx/sites-available/example.conf /etc/nginx/sites-enabled/
-sudo nginx -t && sudo systemctl reload nginx
-```
-
-The pool runs the app as its own user, not `www-data`. Create the env file:
-
-```sh
-sudo install -m 640 -o root -g example /dev/null /etc/example/example.env
-sudoedit /etc/example/example.env
-```
-
-```text
-APP_NAME=example
-APP_DB_PATH=/var/lib/example/example.sqlite
-APP_ADMIN_TOKEN=<long random value>
-```
-
-Deploy from your machine:
-
-```sh
-cd apps/php-sqlite-app
-make deploy APP=example HOST=deploy@<server-name>
-```
-
 ## Go service
 
 ```sh
@@ -91,6 +59,7 @@ sudo install -m 640 -o root -g example /dev/null /etc/example/example.env
 sudoedit /etc/example/example.env
 sudo cp infra/systemd/go-service.service /etc/systemd/system/example.service
 sudo systemctl daemon-reload
+sudo systemctl enable example
 sudo cp infra/nginx/go-service.conf /etc/nginx/sites-available/example.conf
 sudo ln -s /etc/nginx/sites-available/example.conf /etc/nginx/sites-enabled/
 sudo nginx -t && sudo systemctl reload nginx
@@ -99,16 +68,19 @@ sudo nginx -t && sudo systemctl reload nginx
 ```text
 APP_NAME=example
 APP_ADDR=127.0.0.1:8081
+APP_DB_PATH=/var/lib/example/example.sqlite
 APP_ADMIN_TOKEN=<long random value>
 ```
 
-Deploy from your machine, then enable the service the first time:
+Deploy from your machine:
 
 ```sh
 cd apps/go-service
 make deploy APP=example HOST=deploy@<server-name>
-ssh -t deploy@<server-name> 'sudo systemctl enable --now example'
 ```
+
+`make rollback` puts the previous binary back. The database is not rolled back,
+so schema changes stay additive.
 
 The unit runs the binary as the app user with no capabilities, a read-only
 system, write access to `/var/lib/example` and `/var/log/example` only, and a

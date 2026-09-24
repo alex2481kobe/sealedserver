@@ -36,7 +36,8 @@ systemctl enable --now unattended-upgrades
 echo
 echo "Base packages installed."
 echo "Next:"
-echo "1. Run: sudo tailscale up --hostname ${TAILSCALE_HOSTNAME}"
-echo "2. Confirm ssh deploy@${TAILSCALE_HOSTNAME} works from another terminal."
-echo "3. Run: sudo bash scripts/lock-no-inbound-firewall.sh"
-echo "4. Create the Cloudflare Tunnel and install /etc/cloudflared/config.yml."
+echo "1. Run: sudo bash scripts/harden-ubuntu.sh"
+echo "2. Run: sudo tailscale up --hostname ${TAILSCALE_HOSTNAME}"
+echo "3. Confirm ssh deploy@${TAILSCALE_HOSTNAME} works from another terminal."
+echo "4. Run: sudo bash scripts/lock-no-inbound-firewall.sh"
+echo "5. Create the Cloudflare Tunnel and install /etc/cloudflared/config.yml."

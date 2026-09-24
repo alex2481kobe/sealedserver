@@ -5,7 +5,7 @@ This takes a fresh Ubuntu 24.04 server to the template's shape:
 - no public inbound ports, at the provider firewall and in UFW;
 - SSH only over Tailscale, with keys, as a `deploy` user;
 - nginx on `127.0.0.1:8080`, published by Cloudflare Tunnel;
-- automatic security updates.
+- automatic security updates, with a reboot at 04:00 UTC when one is needed.
 
 Replace `<server-name>` with the server's Tailscale name and `<server-ip>` with
 its public address.
@@ -29,28 +29,31 @@ install -d -m 700 -o deploy -g deploy /home/deploy/.ssh
 install -m 600 -o deploy -g deploy /root/.ssh/authorized_keys /home/deploy/.ssh/authorized_keys
 ```
 
-Turn off password logins:
-
-```sh
-sed -i 's/^#\?PasswordAuthentication .*/PasswordAuthentication no/' /etc/ssh/sshd_config
-sed -i 's/^#\?PermitRootLogin .*/PermitRootLogin prohibit-password/' /etc/ssh/sshd_config
-systemctl reload ssh
-```
-
 Check `ssh deploy@<server-ip>` works from a second terminal, then continue as
 `deploy`.
 
-## 2. Base packages
+## 2. Base packages and hardening
 
 ```sh
 sudo apt install -y git
 git clone https://github.com/alex2481kobe/backend-template.git
 cd backend-template
 sudo bash scripts/bootstrap-no-inbound-ubuntu.sh <server-name>
+sudo bash scripts/harden-ubuntu.sh
 ```
 
-The script installs nginx, SQLite, UFW, fail2ban, logrotate, unattended
-upgrades, Tailscale and `cloudflared`.
+The bootstrap script installs nginx, SQLite, UFW, fail2ban, logrotate,
+unattended upgrades, Tailscale and `cloudflared`.
+
+The hardening script, safe to run again:
+
+| Change | Effect |
+| --- | --- |
+| SSH: no passwords, no root login, no X11 forwarding | Only `deploy` logs in, with a key; root work goes through `sudo` and its password |
+| Automatic reboot at 04:00 UTC | Kernel and library fixes take effect; services start again on boot |
+
+It refuses to run until a sudo user has an SSH key. Check `ssh deploy@...`
+from a second terminal before closing the current one.
 
 ## 3. Tailscale
 
@@ -136,3 +139,48 @@ nc -vz -w 5 <server-ip> 22
 nc -vz -w 5 <server-ip> 80
 nc -vz -w 5 <server-ip> 443
 ```
+
+## Limits
+
+| Resource | Limit | What happens past it |
+| --- | --- | --- |
+| nginx connections | 768 per worker, one worker per CPU (Ubuntu's default) | New connections are refused; nginx logs `worker_connections are not enough` |
+| Open websockets | About 768 on a 2-CPU server, across all apps | Same as above. A proxied websocket holds two nginx connections, one from `cloudflared` and one to the app |
+| Go service files | 65536 per service (`LimitNOFILE`) | The service cannot accept more connections |
+| Memory | The server's RAM; no swap and no per-app cap | The kernel stops the process using the most memory, and systemd restarts it |
+
+Page and API requests hold a connection for milliseconds, so the connection
+limit only matters for long-lived connections such as websockets.
+
+Raising the nginx limit is an option in `/etc/nginx/nginx.conf`:
+
+```nginx
+worker_rlimit_nofile 8192;          # top level, next to worker_processes
+
+events {
+    worker_connections 4096;
+}
+```
+
+Then `sudo nginx -t && sudo systemctl reload nginx`. Each open connection uses
+memory in nginx, `cloudflared` and the app, so a higher limit allows more
+memory use.
+
+## Maintenance
+
+From your own machine, with Tailscale connected:
+
+```sh
+bash scripts/maintain-server.sh deploy@<server-name>            # harden, update, reboot if needed, report
+bash scripts/maintain-server.sh deploy@<server-name> report     # report only
+```
+
+It asks for the SSH key passphrase once and the sudo password once, then:
+
+1. runs `harden-ubuntu.sh` and checks a new SSH login still works;
+2. installs all updates, keeping edited config files;
+3. reboots if the updates need it and waits for the server to come back;
+4. saves `server-report-<date>.txt` in the current folder, or in the folder
+   given as a third argument.
+
+Reports from different days can be compared with `diff`.

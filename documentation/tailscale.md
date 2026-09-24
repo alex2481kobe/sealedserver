@@ -65,6 +65,20 @@ To go back to OpenSSH:
 sudo tailscale up --reset --hostname <server-name>
 ```
 
+## When Tailscale is down
+
+SSH only works through Tailscale, so the way in without it is the VPS
+provider's web console. It is a screen and keyboard attached to the server,
+not SSH, so the firewall and `PermitRootLogin no` do not apply to it.
+
+1. Open the server's console in the provider's dashboard.
+2. Log in as `deploy` with its password (the one `sudo` asks for).
+3. Check Tailscale: `sudo systemctl status tailscaled`, `sudo tailscale up --hostname <server-name>`.
+
+If the server's own Tailscale is fine and only your machine's is not, fixing
+your machine's Tailscale is enough. The sites keep running either way, because
+visitors come in through Cloudflare, not Tailscale.
+
 ## Private dashboards
 
 A dashboard bound to `127.0.0.1` on the server is reached through an SSH tunnel:

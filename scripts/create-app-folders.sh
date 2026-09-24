@@ -7,7 +7,7 @@ if [[ "${EUID}" -ne 0 ]]; then
 fi
 
 if [[ "${1:-}" == "" ]]; then
-  echo "Usage: sudo bash scripts/create-app-folders.sh <app-name> [static|php|go]"
+  echo "Usage: sudo bash scripts/create-app-folders.sh <app-name> [static|go]"
   exit 1
 fi
 
@@ -15,9 +15,9 @@ APP="$1"
 LANE="${2:-static}"
 
 case "${LANE}" in
-  static|php|go) ;;
+  static|go) ;;
   *)
-    echo "Lane must be static, php, or go."
+    echo "Lane must be static or go."
     exit 1
     ;;
 esac
