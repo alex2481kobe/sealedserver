@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/sealedserver-mark.png" alt="Sealed Server" width="140" height="140" />
+</p>
+
 <h1 align="center">Sealed Server</h1>
 
 <p align="center">
