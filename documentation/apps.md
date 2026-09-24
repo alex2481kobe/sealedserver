@@ -110,8 +110,9 @@ make deploy APP=example HOST=deploy@<server-name>
 ssh -t deploy@<server-name> 'sudo systemctl enable --now example'
 ```
 
-The unit runs the binary as the app user with a read-only system, write access
-to `/var/lib/example` and `/var/log/example` only, and restarts it on failure.
+The unit runs the binary as the app user with no capabilities, a read-only
+system, write access to `/var/lib/example` and `/var/log/example` only, and a
+syscall filter, and restarts it on failure.
 
 ## Check an app
 

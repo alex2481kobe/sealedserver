@@ -44,7 +44,7 @@ Under **Security > WAF > Custom rules**:
 | Rule | Expression | Action |
 | --- | --- | --- |
 | Unusual methods | `not (http.request.method in {"GET" "POST" "HEAD" "OPTIONS"})` | Block |
-| Dotfile probes | `starts_with(http.request.uri.path, "/.") and not starts_with(http.request.uri.path, "/.well-known/")` | Block |
+| Dotfile probes | `http.request.uri.path contains "/." and not starts_with(http.request.uri.path, "/.well-known/")` | Block |
 | Admin paths | `starts_with(http.request.uri.path, "/admin")` | Block |
 | Public API writes | `http.request.method eq "POST" and starts_with(http.request.uri.path, "/api/") and not starts_with(http.request.uri.path, "/api/webhooks/")` | Managed Challenge |
 

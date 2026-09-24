@@ -12,7 +12,8 @@
 </p>
 
 Visitors reach the server through Cloudflare Tunnel. You reach it through
-Tailscale. The firewall lets nothing in from the public internet.
+Tailscale, with OpenSSH or Tailscale SSH. No port is open to the internet, not
+even 22.
 
 ```text
 visitor -> Cloudflare -> Tunnel -> nginx on 127.0.0.1:8080 -> static files, PHP or Go
@@ -21,7 +22,7 @@ admin   -> Tailscale  -> SSH
 
 ## Get started
 
-Tell Claude Code or Codex:
+Tell your coding agent:
 
 ```text
 Set up my Ubuntu server with https://github.com/alex2481kobe/backend-template, starting from documentation/setup.md.

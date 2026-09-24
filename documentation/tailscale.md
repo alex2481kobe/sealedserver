@@ -1,8 +1,20 @@
 # Tailscale
 
-Tailscale is the only way into the server for admins. The server keeps normal
-OpenSSH on port 22, and UFW allows it on the `tailscale0` interface only, so
-SSH uses your usual keys and passphrases and is closed to the internet.
+Tailscale is the only way into the server for admins. SSH travels inside the
+tailnet, so port 22 is never open to the internet: the provider firewall has no
+inbound rules at all, and UFW allows 22 on `tailscale0` only. SSH works in one
+of two ways:
+
+| | OpenSSH over Tailscale | Tailscale SSH |
+| --- | --- | --- |
+| Start with | `tailscale up` | `tailscale up --ssh` |
+| Who handles SSH | The server's own `sshd` on port 22 | `tailscaled` |
+| Login | Your SSH keys and passphrase | Your tailnet identity, no SSH keys |
+| Access rules | `authorized_keys` on the server | The `ssh` block in the tailnet policy |
+| Extra check | Key passphrase | Check mode: sign in again before a session |
+
+The setup guide and scripts use OpenSSH over Tailscale, with UFW allowing port
+22 on `tailscale0` only.
 
 ## Tailnet settings
 
@@ -36,11 +48,18 @@ is on. Unused keys are revoked.
 
 Tagged servers belong to the tailnet rather than to a person.
 
-## Tailscale SSH
+## Using Tailscale SSH
 
-Tailscale SSH replaces OpenSSH keys with tailnet identity and can require a
-fresh login before each session (check mode). The template does not use it. A
-server that was started with `--ssh` goes back to OpenSSH with:
+```sh
+sudo tailscale up --ssh --hostname <server-name>
+```
+
+Uncomment the `ssh` block in the tailnet policy. It allows admins to log in as
+`deploy` only, and asks them to sign in again before every session on
+`tag:prod` servers and once an hour on `tag:dev` servers. Connect with plain
+`ssh deploy@<server-name>` or `tailscale ssh deploy@<server-name>`.
+
+To go back to OpenSSH:
 
 ```sh
 sudo tailscale up --reset --hostname <server-name>

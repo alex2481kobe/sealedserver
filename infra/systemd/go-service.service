@@ -11,26 +11,34 @@ Wants=network-online.target
 Type=simple
 User=example
 Group=example
-WorkingDirectory=/opt/example
+UMask=0077
+WorkingDirectory=/var/lib/example
 EnvironmentFile=/etc/example/example.env
 ExecStart=/opt/example/example-server
 Restart=on-failure
 RestartSec=3
 LimitNOFILE=65536
 
+CapabilityBoundingSet=
 NoNewPrivileges=true
 PrivateTmp=true
+PrivateDevices=true
 ProtectSystem=strict
 ProtectHome=true
 ReadWritePaths=/var/lib/example /var/log/example
+ProtectClock=true
+ProtectHostname=true
+ProtectKernelLogs=true
 ProtectKernelTunables=true
 ProtectKernelModules=true
 ProtectControlGroups=true
 RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
 RestrictNamespaces=true
+RestrictSUIDSGID=true
 LockPersonality=true
 MemoryDenyWriteExecute=true
 SystemCallArchitectures=native
+SystemCallFilter=@system-service
 
 [Install]
 WantedBy=multi-user.target

@@ -64,8 +64,8 @@ From your own machine, on the same tailnet:
 ssh deploy@<server-name>
 ```
 
-Only continue once this works. Tailnet policy, tags and device approval are in
-[Tailscale](tailscale.md).
+Only continue once this works. This is OpenSSH over Tailscale. Tailscale SSH,
+tailnet policy, tags and device approval are in [Tailscale](tailscale.md).
 
 ## 4. Close the firewall
 
@@ -113,15 +113,13 @@ Run `route dns` once per hostname. Account and zone settings are in
 ## 7. Check
 
 ```sh
-sudo bash scripts/verify-no-inbound.sh
-sudo bash scripts/check-server-health.sh
+sudo bash scripts/server-report.sh > server-report.txt
 ```
 
-From a machine outside the tailnet, this should fail:
-
-```sh
-nc -vz -w 5 <server-ip> 22
-```
+The report is read-only and masks secrets. It covers the stack, users, app
+folders, listeners, firewall, SSH, services, nginx, the tunnel, backups, and
+live readings such as memory, disk and response times. Two reports from
+different days can be compared with `diff`.
 
 | Listener | Expected |
 | --- | --- |
@@ -129,3 +127,12 @@ nc -vz -w 5 <server-ip> 22
 | App services | `127.0.0.1` ports only |
 | sshd | `0.0.0.0:22`, reachable only through `tailscale0` |
 | cloudflared | outbound connections only |
+
+No port is open to the internet, not even 22. From a machine outside the
+tailnet, all of these fail:
+
+```sh
+nc -vz -w 5 <server-ip> 22
+nc -vz -w 5 <server-ip> 80
+nc -vz -w 5 <server-ip> 443
+```

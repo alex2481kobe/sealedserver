@@ -14,6 +14,25 @@
     }
   ],
 
+  // Only for servers started with `tailscale up --ssh`. OpenSSH over
+  // Tailscale ignores this block.
+  // "ssh": [
+  //   {
+  //     "action": "check",
+  //     "src": ["autogroup:admin"],
+  //     "dst": ["tag:prod"],
+  //     "users": ["deploy"],
+  //     "checkPeriod": "always"
+  //   },
+  //   {
+  //     "action": "check",
+  //     "src": ["autogroup:admin"],
+  //     "dst": ["tag:server", "tag:dev"],
+  //     "users": ["deploy"],
+  //     "checkPeriod": "1h"
+  //   }
+  // ],
+
   "tests": [
     {
       "src": "autogroup:admin",
