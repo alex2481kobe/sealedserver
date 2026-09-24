@@ -30,9 +30,11 @@ jobs:
           go-version-file: apps/go-service/go.mod
           cache: false
 
-      - name: Test Go service
+      - name: Vet and test Go service
         working-directory: apps/go-service
-        run: go test ./...
+        run: |
+          go vet ./...
+          go test ./...
 
   php:
     name: PHP syntax
@@ -44,7 +46,10 @@ jobs:
           persist-credentials: false
 
       - name: Lint PHP files
-        run: find apps/php-sqlite-app -name '*.php' -type f -exec php -l {} \;
+        run: |
+          status=0
+          for f in $(find apps/php-sqlite-app -name '*.php' -type f); do php -l "$f" || status=1; done
+          exit $status
 
   shell:
     name: Shell syntax
@@ -57,5 +62,6 @@ jobs:
 
       - name: Check scripts
         run: |
-          find scripts -name '*.sh' -type f -exec sh -n {} \;
-          sh -n ops/appctl
+          status=0
+          for f in scripts/*.sh; do bash -n "$f" || status=1; done
+          exit $status

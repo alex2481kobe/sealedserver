@@ -28,7 +28,14 @@ fi
 
 mkdir -p "/var/www/${APP}/public" "/var/lib/${APP}" "/etc/${APP}" "/var/log/${APP}"
 chown -R "${APP}:${APP}" "/var/www/${APP}" "/var/lib/${APP}" "/var/log/${APP}"
+chmod 750 "/var/www/${APP}" "/var/lib/${APP}" "/var/log/${APP}"
+
+# Env files: root writes them, the app group reads them.
+chown root:"${APP}" "/etc/${APP}"
 chmod 750 "/etc/${APP}"
+
+# nginx runs as www-data and reads the 750 web root through the app group.
+usermod -aG "${APP}" www-data
 
 if [[ "${LANE}" == "go" ]]; then
   mkdir -p "/opt/${APP}"
@@ -41,3 +48,4 @@ echo "Public root: /var/www/${APP}/public"
 echo "Data root:   /var/lib/${APP}"
 echo "Env path:    /etc/${APP}/${APP}.env"
 echo "Logs root:   /var/log/${APP}"
+echo "Restart nginx once so www-data picks up the new group: sudo systemctl restart nginx"

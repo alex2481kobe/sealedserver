@@ -1,5 +1,5 @@
 {
-  // Example production server policy. Replace users/groups before applying.
+  // Tailnet policy for servers. Admins reach tagged servers on SSH only.
   "tagOwners": {
     "tag:server": ["autogroup:admin"],
     "tag:prod": ["autogroup:admin"],
@@ -14,27 +14,11 @@
     }
   ],
 
-  "ssh": [
-    {
-      "action": "check",
-      "src": ["autogroup:admin"],
-      "dst": ["tag:server", "tag:prod"],
-      "users": ["deploy"],
-      "checkPeriod": "always"
-    },
-    {
-      "action": "check",
-      "src": ["autogroup:admin"],
-      "dst": ["tag:dev"],
-      "users": ["deploy"],
-      "checkPeriod": "1h"
-    }
-  ],
-
   "tests": [
     {
       "src": "autogroup:admin",
-      "accept": ["tag:server:22", "tag:prod:22", "tag:dev:22"]
+      "accept": ["tag:server:22", "tag:prod:22", "tag:dev:22"],
+      "deny": ["tag:prod:8080"]
     }
   ]
 }

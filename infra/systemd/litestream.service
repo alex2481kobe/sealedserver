@@ -1,17 +1,17 @@
-# Example Litestream systemd unit.
+# Litestream replication for one app, running as the app's user so SQLite
+# sidecar files keep the app's ownership.
 #
-# Copy to /etc/systemd/system/litestream-example.service and replace paths.
+# Install to /etc/systemd/system/litestream-example.service and replace example.
 
 [Unit]
-Description=Litestream SQLite Replication For Example
+Description=Litestream for example
 After=network-online.target
 Wants=network-online.target
 
 [Service]
 User=example
 Group=example
-EnvironmentFile=/etc/example/example.env
-ExecStart=/usr/local/bin/litestream replicate -config /etc/example/litestream.yml
+ExecStart=/usr/bin/litestream replicate -config /etc/example/litestream.yml
 Restart=always
 RestartSec=5
 

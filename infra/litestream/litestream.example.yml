@@ -1,6 +1,10 @@
-# Example Litestream config.
+# Litestream config for one app.
 #
-# Replace app names, DB path, and bucket target.
+# Install to /etc/example/litestream.yml, owned root:example, mode 640.
+# The bucket is a private R2 bucket. Keys come from an R2 API token scoped to it.
+
+access-key-id: <r2-access-key-id>
+secret-access-key: <r2-secret-access-key>
 
 dbs:
   - path: /var/lib/example/example.sqlite

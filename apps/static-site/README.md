@@ -1,23 +1,19 @@
 # Static Site
 
-Use this lane for simple product sites, landing pages, legal pages, app store files, and static builds.
+Plain files served by nginx: HTML, CSS, JavaScript, images, `robots.txt`,
+`sitemap.xml`, or the output of a frontend build.
 
-## Server Shape
+```text
+/var/www/<app>/public/
+  index.html
+  404.html
+  assets/        cached for a year
+```
 
-- Build locally or in CI.
-- Deploy static files to `/var/www/<app>/public`.
-- Serve with nginx.
-- Use Cloudflare for DNS, CDN, TLS, WAF, and cache controls.
+Files under `assets/` are cached for a year by browsers and Cloudflare. A
+changed asset needs a new URL, either a hashed file name from a build tool or a
+query string such as `styles.css?v=20260101a`. Everything else is cached for
+five minutes.
 
-## Good Fits
-
-- Product landing pages.
-- Static docs.
-- Download pages where links are public or handed off to a separate API.
-
-## Add PHP When
-
-- You need Lemon Squeezy webhooks.
-- You need private admin stats.
-- You need event/download tracking.
-- You need signed R2 links for paid assets.
+To set up and deploy a static site, see
+[Apps](../../documentation/apps.md#static-site).

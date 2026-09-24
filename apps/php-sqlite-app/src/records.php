@@ -16,49 +16,15 @@ function app_record_event(string $eventType, ?string $subject, array $metadata):
     ]);
 }
 
-function app_record_download(string $assetKey, ?string $license, ?string $source): void {
-    $stmt = app_db()->prepare(
-        'INSERT INTO downloads (asset_key, license, source, ip_hash, user_agent, created_at)
-         VALUES (:asset_key, :license, :source, :ip_hash, :user_agent, :created_at)'
-    );
-    $stmt->execute([
-        ':asset_key' => $assetKey,
-        ':license' => $license,
-        ':source' => $source,
-        ':ip_hash' => app_client_ip_hash(),
-        ':user_agent' => app_user_agent(),
-        ':created_at' => time(),
-    ]);
-}
-
 function app_admin_summary(): array {
-    $db = app_db();
-    return [
-        'events' => (int) $db->query('SELECT COUNT(*) FROM events')->fetchColumn(),
-        'downloads' => (int) $db->query('SELECT COUNT(*) FROM downloads')->fetchColumn(),
-        'assets' => (int) $db->query('SELECT COUNT(*) FROM assets')->fetchColumn(),
-        'webhooks' => (int) $db->query('SELECT COUNT(*) FROM webhook_events')->fetchColumn(),
-        'orders' => (int) $db->query('SELECT COUNT(*) FROM commerce_orders')->fetchColumn(),
-    ];
+    $rows = app_db()->query(
+        'SELECT event_type, COUNT(*) AS total FROM events GROUP BY event_type ORDER BY total DESC'
+    )->fetchAll();
+    $summary = [];
+    foreach ($rows as $row) $summary[(string) $row['event_type']] = (int) $row['total'];
+    return $summary;
 }
 
 function app_admin_recent(): array {
-    $db = app_db();
-    return [
-        'events' => app_fetch_recent($db, 'events', 'created_at'),
-        'downloads' => app_fetch_recent($db, 'downloads', 'created_at'),
-        'orders' => app_fetch_recent($db, 'commerce_orders', 'created_at'),
-        'webhooks' => app_fetch_recent($db, 'webhook_events', 'handled_at'),
-    ];
-}
-
-function app_fetch_recent(PDO $db, string $table, string $timeColumn): array {
-    $allowed = [
-        'events' => 'created_at',
-        'downloads' => 'created_at',
-        'commerce_orders' => 'created_at',
-        'webhook_events' => 'handled_at',
-    ];
-    if (($allowed[$table] ?? null) !== $timeColumn) return [];
-    return $db->query("SELECT * FROM $table ORDER BY $timeColumn DESC LIMIT 20")->fetchAll();
+    return app_db()->query('SELECT * FROM events ORDER BY created_at DESC LIMIT 20')->fetchAll();
 }

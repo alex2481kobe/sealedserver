@@ -1,0 +1,18 @@
+# Cloudflare Tunnel config for one server.
+#
+# Install to /etc/cloudflared/config.yml. Every hostname goes to the one local
+# nginx listener, and nginx picks the site by server_name.
+
+tunnel: <tunnel-id>
+credentials-file: /etc/cloudflared/<tunnel-id>.json
+
+ingress:
+  - hostname: example.com
+    service: http://127.0.0.1:8080
+  - hostname: www.example.com
+    service: http://127.0.0.1:8080
+  - hostname: app.example.com
+    service: http://127.0.0.1:8080
+  - hostname: api.example.com
+    service: http://127.0.0.1:8080
+  - service: http_status:404

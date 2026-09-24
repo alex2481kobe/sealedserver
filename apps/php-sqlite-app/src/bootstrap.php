@@ -5,7 +5,27 @@ date_default_timezone_set('UTC');
 
 function app_env(string $key, ?string $default = null): ?string {
     $value = getenv($key);
-    return is_string($value) && $value !== '' ? $value : $default;
+    if (!is_string($value) || $value === '') $value = app_env_file()[$key] ?? '';
+    return $value !== '' ? $value : $default;
+}
+
+// PHP-FPM does not pass the process environment through, so the pool sets
+// APP_ENV_FILE and the app reads KEY=VALUE lines from it.
+function app_env_file(): array {
+    static $values = null;
+    if (is_array($values)) return $values;
+    $values = [];
+
+    $path = getenv('APP_ENV_FILE');
+    if (!is_string($path) || $path === '' || !is_readable($path)) return $values;
+
+    foreach (file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) ?: [] as $line) {
+        $line = trim($line);
+        if ($line === '' || $line[0] === '#' || !str_contains($line, '=')) continue;
+        [$key, $value] = explode('=', $line, 2);
+        $values[trim($key)] = trim($value);
+    }
+    return $values;
 }
 
 function app_db_path(): string {
@@ -28,29 +48,11 @@ function app_db(): PDO {
     $pdo->exec('PRAGMA synchronous = NORMAL');
     $pdo->exec('PRAGMA foreign_keys = ON');
     $pdo->exec('PRAGMA busy_timeout = 5000');
-    app_apply_schema($pdo);
-    return $pdo;
-}
 
-function app_apply_schema(PDO $pdo): void {
     $schema = file_get_contents(__DIR__ . '/../db/schema.sql');
     if ($schema === false) throw new RuntimeException('missing schema.sql');
     $pdo->exec($schema);
-    app_migrate($pdo);
-}
-
-function app_migrate(PDO $pdo): void {
-    if (!app_column_exists($pdo, 'webhook_events', 'event_name')) {
-        $pdo->exec('ALTER TABLE webhook_events ADD COLUMN event_name TEXT');
-    }
-}
-
-function app_column_exists(PDO $pdo, string $table, string $column): bool {
-    $stmt = $pdo->query("PRAGMA table_info($table)");
-    foreach ($stmt->fetchAll() as $row) {
-        if (($row['name'] ?? '') === $column) return true;
-    }
-    return false;
+    return $pdo;
 }
 
 function app_json_headers(): void {

@@ -3,8 +3,6 @@ declare(strict_types=1);
 
 require __DIR__ . '/../src/bootstrap.php';
 require __DIR__ . '/../src/records.php';
-require __DIR__ . '/../src/commerce.php';
-require __DIR__ . '/../src/assets.php';
 
 $path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?? '/';
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
@@ -24,24 +22,6 @@ try {
             is_array($body['metadata'] ?? null) ? $body['metadata'] : []
         );
         app_json(['ok' => true], 201);
-    }
-
-    if ($path === '/api/downloads' && $method === 'POST') {
-        $body = app_json_input();
-        app_record_download(
-            app_string($body['asset_key'] ?? '', 128),
-            app_optional_string($body['license'] ?? null, 64),
-            app_optional_string($body['source'] ?? null, 128)
-        );
-        app_json(['ok' => true], 201);
-    }
-
-    if (preg_match('#^/api/assets/([a-zA-Z0-9._/-]+)/download$#', $path, $m) && $method === 'GET') {
-        app_json(app_asset_download_response($m[1]));
-    }
-
-    if ($path === '/api/webhooks/lemon-squeezy' && $method === 'POST') {
-        app_json(app_handle_lemon_webhook(app_raw_input()));
     }
 
     if ($path === '/api/admin/summary' && $method === 'GET') {

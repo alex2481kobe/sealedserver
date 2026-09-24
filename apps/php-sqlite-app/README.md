@@ -1,51 +1,46 @@
-# PHP SQLite App
+# PHP + SQLite App
 
-Thin starter lane for websites, admin dashboards, event APIs, download records, Lemon Squeezy webhooks, and other small server-side endpoints.
+A small PHP 8.3 API with no framework and no Composer packages. It records
+events in SQLite and has a token-protected admin page.
 
-## Shape
+| Route | Purpose |
+| --- | --- |
+| `GET /api/healthz` | Health check |
+| `POST /api/events` | Record an event: `{"event_type": "...", "subject": "...", "metadata": {}}` |
+| `GET /api/admin/summary` | Event counts by type. Needs `X-Admin-Token` |
+| `GET /api/admin/recent` | Latest 20 events. Needs `X-Admin-Token` |
+| `/admin.html` | Page that calls the two admin routes |
 
-```text
-apps/php-sqlite-app/
-  public/
-  src/
-  migrations/
-```
+The schema in `db/schema.sql` is applied when the app opens the database.
 
-## Rules
-
-- Keep routing small and explicit.
-- Validate input at the route boundary.
-- Store the SQLite DB under `/var/lib/<app>/<app>.sqlite`, not in the deployed code folder.
-- Put env values under `/etc/<app>/<app>.env`.
-- Use prepared statements for all SQL.
-- Use Litestream or another tested backup path before production writes matter.
-
-## Use Something Else When
-
-- The app needs realtime websockets or simulation loops: use Go.
-- The app needs seller accounts, uploads, moderation, payouts, team permissions, or heavy reporting: use Postgres.
-
-## Local Dev
+## Run locally
 
 ```sh
+cp .env.example .env
 make dev
-```
-
-Then test:
-
-```sh
 curl http://127.0.0.1:8080/api/healthz
 curl -X POST http://127.0.0.1:8080/api/events \
   -H 'Content-Type: application/json' \
   -d '{"event_type":"visit","metadata":{"page":"home"}}'
 ```
 
-## Production Notes
+## Deploy
 
-- Set `APP_DB_PATH=/var/lib/<app>/<app>.sqlite`.
-- Set `APP_ADMIN_TOKEN` in `/etc/<app>/<app>.env`.
-- Set `LEMON_SQUEEZY_WEBHOOK_SECRET` before enabling `/api/webhooks/lemon-squeezy`.
-- Put the env file outside the deployed code folder.
-- Use Cloudflare Turnstile or another challenge on public write-heavy forms.
-- Add Lemon Squeezy webhook signature verification before trusting purchase events.
-- Replace the demo `APP_DOWNLOAD_TOKEN` paid-download check with real entitlement or signed R2 URL behavior before selling files at scale.
+The server needs the app folders, the env file, the PHP-FPM pool and the nginx
+site first. See [Apps](../../documentation/apps.md#php--sqlite-app).
+
+```sh
+make deploy APP=example HOST=deploy@<server-name>
+```
+
+## Settings
+
+The app reads settings from the environment, then from the file named by
+`APP_ENV_FILE`. On the server that file is `/etc/<app>/<app>.env`.
+
+| Variable | Default |
+| --- | --- |
+| `APP_NAME` | `php-sqlite-app` |
+| `APP_DB_PATH` | `var/app.sqlite` inside the app folder |
+| `APP_ADMIN_TOKEN` | empty, which turns the admin routes off |
+| `APP_MAX_BODY_BYTES` | `65536` |

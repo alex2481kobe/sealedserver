@@ -1,22 +1,36 @@
-# Example systemd unit for a Go service.
+# systemd unit for a Go service.
 #
-# Copy to /etc/systemd/system/example.service and replace names/paths.
+# Install to /etc/systemd/system/example.service and replace example.
 
 [Unit]
-Description=Example Go Service
-After=network.target
+Description=example
+After=network-online.target
+Wants=network-online.target
 
 [Service]
+Type=simple
 User=example
 Group=example
-WorkingDirectory=/var/www/example
+WorkingDirectory=/opt/example
 EnvironmentFile=/etc/example/example.env
-ExecStart=/var/www/example/example-server
+ExecStart=/opt/example/example-server
 Restart=on-failure
-RestartSec=5
+RestartSec=3
 LimitNOFILE=65536
+
 NoNewPrivileges=true
 PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/example /var/log/example
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+RestrictNamespaces=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
+SystemCallArchitectures=native
 
 [Install]
 WantedBy=multi-user.target
