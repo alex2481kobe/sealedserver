@@ -15,6 +15,10 @@ its public address.
 Create the server with your SSH key. Until Tailscale works, the provider
 firewall allows SSH from your own IP address only.
 
+On a home server, the router plays the provider firewall's part and forwards
+no ports at all, and the machine's own keyboard and screen replace the
+provider's web console. The first login happens on the local network.
+
 ```sh
 ssh root@<server-ip>
 apt update && apt upgrade -y
@@ -36,8 +40,8 @@ Check `ssh deploy@<server-ip>` works from a second terminal, then continue as
 
 ```sh
 sudo apt install -y git
-git clone https://github.com/alex2481kobe/backend-template.git
-cd backend-template
+git clone https://github.com/alex2481kobe/sealedserver.git
+cd sealedserver
 sudo bash scripts/bootstrap-no-inbound-ubuntu.sh <server-name>
 sudo bash scripts/harden-ubuntu.sh
 ```
@@ -79,6 +83,10 @@ sudo bash scripts/lock-no-inbound-firewall.sh
 UFW now denies all inbound traffic and allows SSH on `tailscale0` only. Then
 remove every inbound rule from the provider firewall and keep outbound open.
 
+The script refuses to run while Tailscale is disconnected, or while any SSH
+session comes in over the public address, since closing the firewall would cut
+that session off.
+
 ## 5. nginx
 
 Remove the default site, which listens on public port 80, and add the shared
@@ -116,8 +124,13 @@ Run `route dns` once per hostname. Account and zone settings are in
 ## 7. Check
 
 ```sh
+sudo bash scripts/verify-sealed.sh
 sudo bash scripts/server-report.sh > server-report.txt
 ```
+
+`verify-sealed.sh` prints PASS or FAIL for each part of the sealed setup: SSH
+login settings, firewall rules, public listeners, Tailscale, and automatic
+updates. It exits with an error if anything fails.
 
 The report is read-only and masks secrets. It covers the stack, users, app
 folders, listeners, firewall, SSH, services, nginx, the tunnel, backups, and
@@ -171,16 +184,18 @@ memory use.
 From your own machine, with Tailscale connected:
 
 ```sh
-bash scripts/maintain-server.sh deploy@<server-name>            # harden, update, reboot if needed, report
-bash scripts/maintain-server.sh deploy@<server-name> report     # report only
+bash scripts/maintain-server.sh deploy@<server-name>            # harden, update, reboot, report, check
+bash scripts/maintain-server.sh deploy@<server-name> report     # report and check only
 ```
 
-It asks for the SSH key passphrase once and the sudo password once, then:
+It asks for the SSH key passphrase once and the sudo password once. The key is
+unlocked in a private agent that ends with the run. Then it:
 
 1. runs `harden-ubuntu.sh` and checks a new SSH login still works;
 2. installs all updates, keeping edited config files;
 3. reboots if the updates need it and waits for the server to come back;
 4. saves `server-report-<date>.txt` in the current folder, or in the folder
-   given as a third argument.
+   given as a third argument;
+5. runs `verify-sealed.sh` and exits with an error if any check fails.
 
 Reports from different days can be compared with `diff`.

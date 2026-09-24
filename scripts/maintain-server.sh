@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Run from your own machine. Over SSH, it hardens the server, installs updates,
-# reboots if the updates need it, and saves a server report locally.
+# reboots if the updates need it, saves a server report locally, and checks the
+# server is still sealed (exits non-zero if not).
 #
 # Asks for the SSH key passphrase once and the sudo password once per run.
 # The key goes into a private ssh-agent that only this run uses and that is
@@ -9,8 +10,8 @@
 # SSH connection only.
 #
 # Usage: bash scripts/maintain-server.sh deploy@<server-name> [all|report] [output-dir]
-#   all     harden, update, reboot if needed, report (default)
-#   report  report only
+#   all     harden, update, reboot if needed, report, check (default)
+#   report  report and check only
 set -euo pipefail
 
 HOST="${1:-}"
@@ -21,7 +22,7 @@ if [[ -z "${HOST}" || ! "${MODE}" =~ ^(all|report)$ ]]; then
   exit 1
 fi
 HERE="$(cd "$(dirname "$0")" && pwd)"
-REMOTE_DIR=".backend-template-scripts"
+REMOTE_DIR=".sealedserver-scripts"
 say() { printf '\n== %s\n' "$1"; }
 remote() { ssh "${SSH_OPTS[@]}" "${HOST}" "$@"; }
 # -k: always read the password, so it is never left over as the command's input.
@@ -48,7 +49,8 @@ if ! remote_sudo true 2>/dev/null; then
 fi
 
 remote "mkdir -p ${REMOTE_DIR}"
-scp -q "${SSH_OPTS[@]}" "${HERE}/harden-ubuntu.sh" "${HERE}/server-report.sh" "${HOST}:${REMOTE_DIR}/"
+scp -q "${SSH_OPTS[@]}" "${HERE}/harden-ubuntu.sh" "${HERE}/server-report.sh" "${HERE}/verify-sealed.sh" \
+  "${HOST}:${REMOTE_DIR}/"
 
 if [[ "${MODE}" == "all" ]]; then
   say "Hardening"
@@ -83,7 +85,15 @@ say "Server report"
 mkdir -p "${OUT_DIR}"
 report="${OUT_DIR}/server-report-$(date +%Y-%m-%d-%H%M).txt"
 (umask 077; remote_sudo bash "${REMOTE_DIR}/server-report.sh" > "${report}")
-remote "rm -rf ${REMOTE_DIR}"
-unset SUDO_PW
 echo "Saved ${report}"
 echo "Compare with an older one: diff <older-report> ${report}"
+
+say "Sealed check"
+sealed=0
+remote_sudo bash "${REMOTE_DIR}/verify-sealed.sh" || sealed=$?
+remote "rm -rf ${REMOTE_DIR}"
+unset SUDO_PW
+if [[ "${sealed}" -ne 0 ]]; then
+  echo "The server is NOT fully sealed. See the FAIL lines above." >&2
+  exit 1
+fi

@@ -1,4 +1,4 @@
-<h1 align="center">Backend Template</h1>
+<h1 align="center">Sealed Server</h1>
 
 <p align="center">
   <strong>Host your sites and small backends on one Ubuntu server with no open ports.</strong><br />
@@ -25,7 +25,7 @@ admin   -> Tailscale  -> SSH
 Tell your coding agent:
 
 ```text
-Set up my Ubuntu server with https://github.com/alex2481kobe/backend-template, starting from documentation/setup.md.
+Set up my Ubuntu server with https://github.com/alex2481kobe/sealedserver, starting from documentation/setup.md.
 ```
 
 Or do it yourself: [set up the server](documentation/setup.md), then
@@ -65,7 +65,10 @@ can move to another server on its own.
 
 ## Works with
 
-Ubuntu 24.04 LTS on any VPS provider. You need a domain on Cloudflare and a
-Tailscale account. Both free plans are enough.
+Ubuntu 24.04 LTS on any VPS or a home server. You need a domain on Cloudflare
+and a Tailscale account. Both free plans are enough.
+
+Cloudflare Tunnel and Tailscale both connect outward, so a home server behind a
+router needs no port forwarding.
 
 MIT. See [LICENSE](LICENSE).

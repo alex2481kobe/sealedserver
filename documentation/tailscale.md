@@ -35,12 +35,15 @@ Interactive:
 sudo tailscale up --hostname <server-name>
 ```
 
-With an auth key and tags, for scripted setup:
+With an auth key and tags, for scripted setup. The key is read from a file so
+it never appears in shell history or the process list:
 
 ```sh
+install -m 600 /dev/null /tmp/ts-key && nano /tmp/ts-key    # paste the key
 sudo tailscale up --hostname <server-name> \
-  --auth-key <tskey-auth-...> \
+  --auth-key file:/tmp/ts-key \
   --advertise-tags=tag:server,tag:prod
+shred -u /tmp/ts-key
 ```
 
 Auth keys are one-off, short-lived and pre-approved only while device approval
