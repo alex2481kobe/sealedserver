@@ -2,9 +2,11 @@
 # Run from your own machine. Over SSH, it hardens the server, installs updates,
 # reboots if the updates need it, and saves a server report locally.
 #
-# Asks for the SSH key passphrase once (loaded into ssh-agent for an hour) and
-# the sudo password once. The password stays in this script's memory and goes
-# to sudo over the SSH connection only.
+# Asks for the SSH key passphrase once and the sudo password once per run.
+# The key goes into a private ssh-agent that only this run uses and that is
+# killed when the script ends, so no other terminal can use the unlocked key.
+# The sudo password stays in this script's memory and goes to sudo over the
+# SSH connection only.
 #
 # Usage: bash scripts/maintain-server.sh deploy@<server-name> [all|report] [output-dir]
 #   all     harden, update, reboot if needed, report (default)
@@ -20,22 +22,17 @@ if [[ -z "${HOST}" || ! "${MODE}" =~ ^(all|report)$ ]]; then
 fi
 HERE="$(cd "$(dirname "$0")" && pwd)"
 REMOTE_DIR=".backend-template-scripts"
-SSH_OPTS=(-o ConnectTimeout=10 -o BatchMode=yes)
-
 say() { printf '\n== %s\n' "$1"; }
 remote() { ssh "${SSH_OPTS[@]}" "${HOST}" "$@"; }
 # -k: always read the password, so it is never left over as the command's input.
 remote_sudo() { printf '%s\n' "${SUDO_PW}" | remote "sudo -k -S -p '' $*"; }
 
-# SSH key: load it once if the agent does not have one.
-ssh-add -l >/dev/null 2>&1 || status=$?
-if [[ "${status:-0}" -eq 2 ]]; then
-  eval "$(ssh-agent -s)" >/dev/null
-  trap 'ssh-agent -k >/dev/null' EXIT
-fi
-if ! ssh-add -l >/dev/null 2>&1; then
-  ssh-add -t 3600
-fi
+# Private agent for this run only, never the shared one.
+eval "$(ssh-agent -s)" >/dev/null
+trap 'ssh-agent -k >/dev/null 2>&1' EXIT
+trap 'exit 130' INT TERM
+ssh-add
+SSH_OPTS=(-o ConnectTimeout=10 -o BatchMode=yes -o "IdentityAgent=${SSH_AUTH_SOCK}" -o AddKeysToAgent=no)
 
 say "Connecting to ${HOST}"
 if ! remote true; then
